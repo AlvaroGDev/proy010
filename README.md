@@ -32,4 +32,8 @@ Este proyecto fue desarrollado como parte de un ejercicio de aprendizaje colabor
 
 - **Álvaro Castanedo Pereira** 
 
+## Co-Autor
+
+Test commit coAutor Álvaro Gutiérrez proyecto10
+
 
