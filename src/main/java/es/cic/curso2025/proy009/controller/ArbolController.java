@@ -143,6 +143,7 @@ public class ArbolController {
                     rama.setLongitud(ramaActualizada.getLongitud());
                     rama.setNumHojas(ramaActualizada.getNumHojas());
                     ramaEncontrada = true;
+                    LOGGER.info("Se ha actualizado la rama con id ", rama.getId());
                     break;  
                 }
             }

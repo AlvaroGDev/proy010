@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -169,57 +171,54 @@ public class ArbolControllerIntegrationTest {
     // ------------------ Tests para ramas ------------------
 
     @Test
-void testCreateRama() throws Exception {
-    // Primero crea un árbol para asignar a la rama
-    Arbol arbol = new Arbol();
-    arbol.setPais("España");
-    arbol.setEdadAnios(300);
-    arbol.setDescripcion("Árbol para rama");
-    Arbol arbolGuardado = arbolRepository.save(arbol);
+    void testCreateRama() throws Exception {
+        // Primero crea un árbol para asignar a la rama
+        Arbol arbol = new Arbol();
+        arbol.setPais("España");
+        arbol.setEdadAnios(300);
+        arbol.setDescripcion("Árbol para rama");
+        Arbol arbolGuardado = arbolRepository.save(arbol);
 
-    Rama rama = new Rama();
-    rama.setLongitud(100);
-    rama.setNumHojas(50);
-    // Nota: no necesitas asignar el árbol a la rama aquí,
-    // ya que el controlador lo asocia por el idArbol en la URL.
+        Rama rama = new Rama();
+        rama.setLongitud(100);
+        rama.setNumHojas(50);
+        // Nota: no necesitas asignar el árbol a la rama aquí,
+        // ya que el controlador lo asocia por el idArbol en la URL.
 
-    String json = objectMapper.writeValueAsString(rama);
+        String json = objectMapper.writeValueAsString(rama);
 
-    mockMvc.perform(post("/arboles/" + arbolGuardado.getId() + "/nuevaRama")
-            .contentType(MediaType.APPLICATION_JSON)
-            .accept(MediaType.APPLICATION_JSON)
-            .content(json))
-            .andExpect(status().isOk())
-            .andExpect(result -> {
-                Arbol arbolConRama = objectMapper.readValue(result.getResponse().getContentAsString(), Arbol.class);
-                assertNotNull(arbolConRama.getRamas());
-                boolean contieneRama = arbolConRama.getRamas().stream()
-                    .anyMatch(r -> r.getLongitud() == 100 && r.getNumHojas() == 50);
-                assertTrue(contieneRama, "El árbol debería contener la rama creada");
-            });
-}
-
+        mockMvc.perform(post("/arboles/" + arbolGuardado.getId() + "/nuevaRama")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    Arbol arbolConRama = objectMapper.readValue(result.getResponse().getContentAsString(), Arbol.class);
+                    assertNotNull(arbolConRama.getRamas());
+                    boolean contieneRama = arbolConRama.getRamas().stream()
+                            .anyMatch(r -> r.getLongitud() == 100 && r.getNumHojas() == 50);
+                    assertTrue(contieneRama, "El árbol debería contener la rama creada");
+                });
+    }
 
     @Test
-void testCreateRamaSinLongitudONumHojasDevuelveError() throws Exception {
-    Arbol arbol = new Arbol();
-    arbol.setPais("Test");
-    arbol.setEdadAnios(100);
-    arbol.setDescripcion("Árbol test");
-    Arbol arbolGuardado = arbolRepository.save(arbol);
+    void testCreateRamaSinLongitudONumHojasDevuelveError() throws Exception {
+        Arbol arbol = new Arbol();
+        arbol.setPais("Test");
+        arbol.setEdadAnios(100);
+        arbol.setDescripcion("Árbol test");
+        Arbol arbolGuardado = arbolRepository.save(arbol);
 
-    Rama rama = new Rama();
-    // No asignamos longitud ni numHojas (null)
+        Rama rama = new Rama();
+        // No asignamos longitud ni numHojas (null)
 
-    String json = objectMapper.writeValueAsString(rama);
+        String json = objectMapper.writeValueAsString(rama);
 
-    mockMvc.perform(post("/arboles/ramas" + arbolGuardado.getId() + "/nuevaRama")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(json))
-            .andExpect(status().isBadRequest());
-}
-
-
+        mockMvc.perform(post("/arboles/ramas" + arbolGuardado.getId() + "/nuevaRama")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isBadRequest());
+    }
 
     @Test
     void testGetRamaPorId() throws Exception {
@@ -247,40 +246,39 @@ void testCreateRamaSinLongitudONumHojasDevuelveError() throws Exception {
     }
 
     @Test
-void testGetAllRamas() throws Exception {
-    Arbol arbol = new Arbol();
-    arbol.setPais("Argentina");
-    arbol.setEdadAnios(250);
-    arbol.setDescripcion("Árbol para ramas");
+    void testGetAllRamas() throws Exception {
+        Arbol arbol = new Arbol();
+        arbol.setPais("Argentina");
+        arbol.setEdadAnios(250);
+        arbol.setDescripcion("Árbol para ramas");
 
-    Rama r1 = new Rama();
-    r1.setLongitud(30);
-    r1.setNumHojas(15);
+        Rama r1 = new Rama();
+        r1.setLongitud(30);
+        r1.setNumHojas(15);
 
-    Rama r2 = new Rama();
-    r2.setLongitud(40);
-    r2.setNumHojas(25);
+        Rama r2 = new Rama();
+        r2.setLongitud(40);
+        r2.setNumHojas(25);
 
-    // Añadimos las ramas al árbol (se asigna arbol a rama también)
-    arbol.addRama(r1);
-    arbol.addRama(r2);
+        // Añadimos las ramas al árbol (se asigna arbol a rama también)
+        arbol.addRama(r1);
+        arbol.addRama(r2);
 
-    // Guardamos el árbol (cascade persist)
-    arbol = arbolRepository.save(arbol);
+        // Guardamos el árbol (cascade persist)
+        arbol = arbolRepository.save(arbol);
 
-    // Guardamos explícitamente las ramas para evitar problemas
-    ramaRepository.save(r1);
-    ramaRepository.save(r2);
+        // Guardamos explícitamente las ramas para evitar problemas
+        ramaRepository.save(r1);
+        ramaRepository.save(r2);
 
-    mockMvc.perform(get("/arboles/ramas")
-            .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
-            .andExpect(result -> {
-                Rama[] ramas = objectMapper.readValue(result.getResponse().getContentAsString(), Rama[].class);
-                assertEquals(2, ramas.length);
-            });
-}
-
+        mockMvc.perform(get("/arboles/ramas")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    Rama[] ramas = objectMapper.readValue(result.getResponse().getContentAsString(), Rama[].class);
+                    assertEquals(2, ramas.length);
+                });
+    }
 
     @Test
     void testUpdateRama() throws Exception {
@@ -303,8 +301,8 @@ void testGetAllRamas() throws Exception {
 
         String json = objectMapper.writeValueAsString(ramaActualizada);
 
-        mockMvc.perform(put("/arboles/ramas/" + rama.getId()) // En vez de entrar a ramas por id, deberiamos entrar al arbol al que pertenece la rama, con el arbol, entrar a su lista de ramas y modificarlo
-                .contentType(MediaType.APPLICATION_JSON)// y de la misma manera, para corroborar que lo hace, entrariamos en la lista de ramas del arbol y la mirariamos así
+        mockMvc.perform(put("/arboles/ramas/" + rama.getId())
+                .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isOk())
@@ -335,5 +333,71 @@ void testGetAllRamas() throws Exception {
 
         Optional<Rama> eliminado = ramaRepository.findById(rama.getId());
         assertTrue(eliminado.isEmpty());
+    }
+// -------------------- PROY010 --------------------
+    @Test
+    @Transactional
+    public void testModificarRamaDeArbol() throws Exception {
+
+        // Creo arbol
+
+        Arbol arbol = new Arbol();
+        arbol.setPais("España");
+        arbol.setDescripcion("Roble centenario");
+
+        // Creo rama y se la asigno al arbol
+
+        Rama rama = new Rama();
+        rama.setLongitud(25);
+        rama.setNumHojas(10);
+        rama.setArbol(arbol);
+
+        // Añado las ramas al arbol y guardo el arbol
+
+        arbol.setRamas(new ArrayList<>());
+        arbol.addRama(rama);
+        arbolRepository.save(arbol);
+
+        // Creamos una rama modificada, cambio los valores, y le doy el mismo id
+
+        Rama ramaModificada = new Rama();
+        ramaModificada.setId(rama.getId());
+        ramaModificada.setLongitud(30);
+        ramaModificada.setNumHojas(15);
+
+        mockMvc.perform(put("/arboles/{id}/rama", arbol.getId()) // Entramos mediante el arbol
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(ramaModificada))) // Le pasamos la rama con los datos a
+                                                                           // modificar
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String jsonResponse = result.getResponse().getContentAsString();
+                    Arbol arbolResponse = objectMapper.readValue(jsonResponse, Arbol.class);
+                    // Generamos un arbol con los datos del arbol ya modificado
+
+                    assertEquals(arbol.getId(), arbolResponse.getId()); // Miramos que tengan el mismo id
+                    assertFalse(arbolResponse.getRamas().isEmpty()); // Miramos que NO esté sin ramas
+                    assertEquals(rama.getId(), arbolResponse.getRamas().get(0).getId());
+                    assertEquals(30, arbolResponse.getRamas().get(0).getLongitud());
+                    assertEquals(15, arbolResponse.getRamas().get(0).getNumHojas());
+                });
+
+                // Hasta aquí hemos comprobado que el objeto como tal se ha modificado
+
+        // Verificar en la BD que los cambios están
+        Rama ramaActualizada = ramaRepository.findById(1L).orElseThrow();
+        assertEquals(30, ramaActualizada.getLongitud());
+        assertEquals(15, ramaActualizada.getNumHojas());
+
+
+        Arbol arbolActualizado = arbolRepository.findById(1L).orElseThrow();
+        assertEquals(arbolActualizado.getRamas()
+                                     .get(0)
+                                     .getNumHojas(), 15);
+        assertEquals(arbolActualizado.getRamas()
+                                     .get(0)
+                                     .getLongitud(), 30);
+
+       // Aquí hemos comprobado que está modificado en la base de datos
     }
 }
