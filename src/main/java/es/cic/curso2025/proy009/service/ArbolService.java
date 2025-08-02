@@ -87,6 +87,12 @@ public class ArbolService {
         return ramaRepository.save(rama);
     }
 
+    public Arbol updateArbolRama(Arbol arbolActualizado){
+        LOGGER.info("Entro en 'updateArbolRama', el método para actualizar un arbol del que hemos actualizado su rama");
+
+        return arbolRepository.save(arbolActualizado);
+    }
+
     public Arbol updateArbol(Long id, Arbol arbolActualizado) {
         LOGGER.info(String.format("Actualizando el árbol con id %d", id));
 

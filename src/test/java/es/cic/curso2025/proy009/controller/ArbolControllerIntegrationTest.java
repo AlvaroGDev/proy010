@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -302,8 +303,8 @@ void testGetAllRamas() throws Exception {
 
         String json = objectMapper.writeValueAsString(ramaActualizada);
 
-        mockMvc.perform(put("/arboles/ramas/" + rama.getId())
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/arboles/ramas/" + rama.getId()) // En vez de entrar a ramas por id, deberiamos entrar al arbol al que pertenece la rama, con el arbol, entrar a su lista de ramas y modificarlo
+                .contentType(MediaType.APPLICATION_JSON)// y de la misma manera, para corroborar que lo hace, entrariamos en la lista de ramas del arbol y la mirariamos así
                 .accept(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isOk())
