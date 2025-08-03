@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.cic.curso2025.proy009.model.Arbol;
@@ -30,7 +31,7 @@ public class ArbolController {
 
     @Autowired
     private ArbolService arbolService;
-
+    
     @Autowired
     private RamaRepository ramaRepository;
 
@@ -111,6 +112,41 @@ public class ArbolController {
                 .orElseThrow(() -> new EntityNotFoundException("Árbol no encontrado con ID: " + idArbol));
     }
 
+    @DeleteMapping("/{idArbol}/borraRama")
+    public void borrarRamaEnArbol(@PathVariable Long idArbol, @RequestBody Rama ramaParaBorrar) {
+        if (ramaParaBorrar.getId() == null || idArbol == null)
+            throw new ModificacionSecurityException(
+                    "Error: alguno de los IDs está vacio. Id de arbol: " + idArbol + ". Id de rama: " + ramaParaBorrar.getId());
+
+        LOGGER.info("Endpoint DELETE /arboles/{id}/borraRama borrar rama de BBDD", idArbol, ". Id rama: " + ramaParaBorrar.getId());
+
+        // Buscar el árbol por id
+        Arbol arbol = arbolService.getArbol(idArbol)
+                .orElseThrow(() -> new EntityNotFoundException("Árbol no encontrado con ID: " + idArbol));
+
+        // Asignar el árbol a la rama
+
+        Boolean ramaEncontrada = false;
+        for (Rama rama : arbol.getRamas()) {
+            if (rama.getId().equals(ramaParaBorrar.getId())) {
+                arbol.getRamas().remove(rama);
+                ramaEncontrada = true;
+                LOGGER.info("Se ha actualizado la rama con id ", rama.getId());
+                ramaEncontrada = true;
+                break;
+            }
+           
+        }
+         if (!ramaEncontrada)
+                throw new ModificacionSecurityException("Error: no se ha ninguna rama");
+
+        // Actualizamos el árbol el repo de rama
+        ramaRepository.deleteById(ramaParaBorrar.getId());
+        arbolService.updateArbol(arbol.getId(), arbol);
+        
+
+    }
+
     @PutMapping("/{id}")
     public Arbol updateArbol(@PathVariable Long id, @RequestBody Arbol arbolActualizado) {
         LOGGER.info("Endpoint PUT /arboles/{} actualizar árbol en BBDD", id);
@@ -120,36 +156,36 @@ public class ArbolController {
         return arbolService.updateArbol(id, arbolActualizado);
     }
 
-   @PutMapping("/{id}/rama") // El id  es del árbol
-   @Transactional
+    @PutMapping("/{id}/rama") // El id es del árbol
+    @Transactional
     public Arbol updateRama(@PathVariable Long id, @RequestBody Rama ramaActualizada) {
 
         LOGGER.info("Endpoint PUT /arboles/ramas/{} actualizar rama en BBDD", id);
 
-        if (ramaActualizada.getId() == null) 
+        if (ramaActualizada.getId() == null)
             throw new ModificacionSecurityException("El ID de la rama no puede ser nulo para hacer una modificación");
-        
 
         Optional<Arbol> arbolActualizar = arbolService.getArbol(id);
 
-        if(arbolActualizar.isEmpty())
-            throw new ModificacionSecurityException("Error: no se encuentra el árbol con id "+ id);
-            
-            Arbol miArbol = arbolActualizar.get();
-            
-            Boolean ramaEncontrada = false;
-            for (Rama rama : miArbol.getRamas()) {
-                if(rama.getId().equals(ramaActualizada.getId())){ // Recorriendo la lista, si el id de la rama en la que estamos es igual que el de la rama a actualizar
-                    rama.setLongitud(ramaActualizada.getLongitud());
-                    rama.setNumHojas(ramaActualizada.getNumHojas());
-                    ramaEncontrada = true;
-                    LOGGER.info("Se ha actualizado la rama con id ", rama.getId());
-                    break;  
-                }
-            }
+        if (arbolActualizar.isEmpty())
+            throw new ModificacionSecurityException("Error: no se encuentra el árbol con id " + id);
 
-            if(!ramaEncontrada)
-                throw new ModificacionSecurityException("Error: no se ha ninguna rama");
+        Arbol miArbol = arbolActualizar.get();
+
+        Boolean ramaEncontrada = false;
+        for (Rama rama : miArbol.getRamas()) {
+            if (rama.getId().equals(ramaActualizada.getId())) { // Recorriendo la lista, si el id de la rama en la que
+                                                                // estamos es igual que el de la rama a actualizar
+                rama.setLongitud(ramaActualizada.getLongitud());
+                rama.setNumHojas(ramaActualizada.getNumHojas());
+                ramaEncontrada = true;
+                LOGGER.info("Se ha actualizado la rama con id ", rama.getId());
+                break;
+            }
+        }
+
+        if (!ramaEncontrada)
+            throw new ModificacionSecurityException("Error: no se ha ninguna rama");
 
         return arbolService.updateArbolRama(miArbol);
     }
@@ -169,16 +205,5 @@ public class ArbolController {
 
         arbolService.deleteRama(id);
     }
-
-    // @PutMapping("/ramas/{id}")
-    // public Rama updateRama(@PathVariable Long id, @RequestBody Rama
-    // ramaActualizada) {
-    // LOGGER.info("Endpoint PUT /arboles/ramas/{} actualizar rama en BBDD", id);
-    // if (ramaActualizada.getId() != null && !ramaActualizada.getId().equals(id)) {
-    // throw new ModificacionSecurityException("El ID de la rama no coincide con el
-    // ID de la URL");
-    // }
-    // return arbolService.updateRama(id, ramaActualizada);
-    // }
 
 }

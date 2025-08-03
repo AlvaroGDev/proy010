@@ -23,10 +23,14 @@ import es.cic.curso2025.proy009.model.Arbol;
 import es.cic.curso2025.proy009.model.Rama;
 import es.cic.curso2025.proy009.repository.ArbolRepository;
 import es.cic.curso2025.proy009.repository.RamaRepository;
+import jakarta.persistence.EntityManager;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 public class ArbolControllerIntegrationTest {
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Autowired
     private MockMvc mockMvc;
@@ -334,7 +338,8 @@ public class ArbolControllerIntegrationTest {
         Optional<Rama> eliminado = ramaRepository.findById(rama.getId());
         assertTrue(eliminado.isEmpty());
     }
-// -------------------- PROY010 --------------------
+
+    // -------------------- PROY010 --------------------
     @Test
     @Transactional
     public void testModificarRamaDeArbol() throws Exception {
@@ -382,22 +387,94 @@ public class ArbolControllerIntegrationTest {
                     assertEquals(15, arbolResponse.getRamas().get(0).getNumHojas());
                 });
 
-                // Hasta aquí hemos comprobado que el objeto como tal se ha modificado
+        // Hasta aquí hemos comprobado que el objeto como tal se ha modificado
 
         // Verificar en la BD que los cambios están
         Rama ramaActualizada = ramaRepository.findById(1L).orElseThrow();
         assertEquals(30, ramaActualizada.getLongitud());
         assertEquals(15, ramaActualizada.getNumHojas());
 
-
         Arbol arbolActualizado = arbolRepository.findById(1L).orElseThrow();
         assertEquals(arbolActualizado.getRamas()
-                                     .get(0)
-                                     .getNumHojas(), 15);
+                .get(0)
+                .getNumHojas(), 15);
         assertEquals(arbolActualizado.getRamas()
-                                     .get(0)
-                                     .getLongitud(), 30);
+                .get(0)
+                .getLongitud(), 30);
 
-       // Aquí hemos comprobado que está modificado en la base de datos
+        // Aquí hemos comprobado que está modificado en la base de datos
     }
+
+    @Test
+    @Transactional
+    public void testBorrarRamaDeArbol() throws Exception {
+
+        // Creo arbol
+
+        Arbol arbol = new Arbol();
+        arbol.setPais("España");
+        arbol.setDescripcion("Roble centenario");
+        arbol.setRamas(new ArrayList<>());
+
+        // Creo rama y se la asigno al arbol
+
+        Rama rama = new Rama();
+        rama.setLongitud(25);
+        rama.setNumHojas(10);
+        rama.setArbol(arbol);
+        arbol.addRama(rama);
+
+        Rama rama2 = new Rama();
+        rama2.setLongitud(55);
+        rama2.setNumHojas(8);
+        rama2.setArbol(arbol);
+        arbol.addRama(rama2);
+
+        // Añado las ramas al arbol y guardo el arbol
+
+        Arbol arbol2 = arbolRepository.save(arbol);
+
+         entityManager.flush();
+         entityManager.clear();
+
+         Arbol arbolRecargado = arbolRepository.findById(arbol2.getId()).orElseThrow();
+        assertEquals(2, arbolRecargado.getRamas().size());
+
+        mockMvc.perform(delete("/arboles/{id}/borraRama", arbol2.getId())
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(rama)))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    Arbol miArbol = arbolRepository.findById(arbol2.getId()).orElseThrow();
+
+                    assertEquals(1, miArbol.getRamas().size());
+                    // Deberia tener 0 ramas porque hemos borrado la unica que le hemos añadido
+                    assertTrue(ramaRepository.findById(rama.getId()).isEmpty());
+                    // Confirmamos también que no hay ninguna rama con ese ID
+
+                });
+    }
+
+    @Test
+    @Transactional // ← Esta anotación es CRUCIAL
+    public void testRelacionArbolRama() {
+        // Configuración
+        Arbol arbol = new Arbol();
+        arbol.setDescripcion("un arbol testing");
+        arbol = arbolRepository.save(arbol);
+
+        Rama rama = new Rama();
+        rama.setLongitud(200);
+        rama.setArbol(arbol); // ← ¡Establece la relación bidireccional!
+        rama = ramaRepository.save(rama);
+
+        // Fuerza sincronización con BD
+        entityManager.flush();
+        entityManager.clear();
+
+        // Verificación
+        Arbol arbolDB = arbolRepository.findById(arbol.getId()).orElseThrow();
+        assertEquals(1, arbolDB.getRamas().size(), "El árbol debería tener 1 rama");
+    }
+
 }
