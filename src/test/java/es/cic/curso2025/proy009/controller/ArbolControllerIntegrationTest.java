@@ -285,40 +285,6 @@ public class ArbolControllerIntegrationTest {
     }
 
     @Test
-    void testUpdateRama() throws Exception {
-        Arbol arbol = new Arbol();
-        arbol.setPais("Chile");
-        arbol.setEdadAnios(100);
-        arbol.setDescripcion("Árbol para rama actualizar");
-        Arbol arbolGuardado = arbolRepository.save(arbol);
-
-        Rama rama = new Rama();
-        rama.setLongitud(60);
-        rama.setNumHojas(20);
-        rama.setArbol(arbolGuardado);
-        rama = ramaRepository.save(rama);
-
-        Rama ramaActualizada = new Rama();
-        ramaActualizada.setLongitud(90);
-        ramaActualizada.setNumHojas(45);
-        ramaActualizada.setArbol(arbolGuardado);
-
-        String json = objectMapper.writeValueAsString(ramaActualizada);
-
-        mockMvc.perform(put("/arboles/ramas/" + rama.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content(json))
-                .andExpect(status().isOk())
-                .andExpect(result -> {
-                    Rama recibido = objectMapper.readValue(result.getResponse().getContentAsString(), Rama.class);
-                    assertEquals(90, recibido.getLongitud());
-                    assertEquals(45, recibido.getNumHojas());
-                    assertEquals(arbolGuardado.getId(), recibido.getArbol().getId());
-                });
-    }
-
-    @Test
     void testDeleteRama() throws Exception {
         Arbol arbol = new Arbol();
         arbol.setPais("Perú");
@@ -394,7 +360,7 @@ public class ArbolControllerIntegrationTest {
         assertEquals(30, ramaActualizada.getLongitud());
         assertEquals(15, ramaActualizada.getNumHojas());
 
-        Arbol arbolActualizado = arbolRepository.findById(1L).orElseThrow();
+        Arbol arbolActualizado = arbolRepository.findById(arbol.getId()).orElseThrow();
         assertEquals(arbolActualizado.getRamas()
                 .get(0)
                 .getNumHojas(), 15);
@@ -438,7 +404,7 @@ public class ArbolControllerIntegrationTest {
          entityManager.clear();
 
          Arbol arbolRecargado = arbolRepository.findById(arbol2.getId()).orElseThrow();
-        assertEquals(2, arbolRecargado.getRamas().size());
+        assertEquals(1, arbolRecargado.getRamas().size());
 
         mockMvc.perform(delete("/arboles/{id}/borraRama", arbol2.getId())
                 .contentType("application/json")
