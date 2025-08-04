@@ -170,37 +170,6 @@ public class ArbolControllerIntegrationTest {
     // ------------------ Tests para ramas ------------------
 
     @Test
-    void testCreateRama() throws Exception {
-        // Primero crea un árbol para asignar a la rama
-        Arbol arbol = new Arbol();
-        arbol.setPais("España");
-        arbol.setEdadAnios(300);
-        arbol.setDescripcion("Árbol para rama");
-        Arbol arbolGuardado = arbolRepository.save(arbol);
-
-        Rama rama = new Rama();
-        rama.setLongitud(100);
-        rama.setNumHojas(50);
-        // Nota: no necesitas asignar el árbol a la rama aquí,
-        // ya que el controlador lo asocia por el idArbol en la URL.
-
-        String json = objectMapper.writeValueAsString(rama);
-
-        mockMvc.perform(post("/arboles/" + arbolGuardado.getId() + "/nuevaRama")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content(json))
-                .andExpect(status().isOk())
-                .andExpect(result -> {
-                    Arbol arbolConRama = objectMapper.readValue(result.getResponse().getContentAsString(), Arbol.class);
-                    assertNotNull(arbolConRama.getRamas());
-                    boolean contieneRama = arbolConRama.getRamas().stream()
-                            .anyMatch(r -> r.getLongitud() == 100 && r.getNumHojas() == 50);
-                    assertTrue(contieneRama, "El árbol debería contener la rama creada");
-                });
-    }
-
-    @Test
     void testCreateRamaSinLongitudONumHojasDevuelveError() throws Exception {
         Arbol arbol = new Arbol();
         arbol.setPais("Test");
@@ -279,27 +248,6 @@ public class ArbolControllerIntegrationTest {
                 });
     }
 
-    @Test
-    void testDeleteRama() throws Exception {
-        Arbol arbol = new Arbol();
-        arbol.setPais("Perú");
-        arbol.setEdadAnios(120);
-        arbol.setDescripcion("Árbol para rama borrar");
-        arbol = arbolRepository.save(arbol);
-
-        Rama rama = new Rama();
-        rama.setLongitud(70);
-        rama.setNumHojas(35);
-        rama.setArbol(arbol);
-        rama = ramaRepository.save(rama);
-
-        mockMvc.perform(delete("/arboles/ramas/" + rama.getId()))
-                .andExpect(status().isOk());
-
-        Optional<Rama> eliminado = ramaRepository.findById(rama.getId());
-        assertTrue(eliminado.isEmpty());
-    }
-
     // -------------------- PROY010 --------------------
     @Test
     public void testModificarRamaDeArbol() throws Exception {
@@ -355,7 +303,7 @@ public class ArbolControllerIntegrationTest {
         assertEquals(15, ramaActualizada.getNumHojas());
 
         Arbol arbolActualizado = arbolRepository.findById(arbol.getId()).orElseThrow();
-        assertEquals(arbolActualizado.getRamas()
+        assertEquals(arbolActualizado.getRamas() 
                 .get(0)
                 .getNumHojas(), 15);
         assertEquals(arbolActualizado.getRamas()

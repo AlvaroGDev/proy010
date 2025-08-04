@@ -34,7 +34,7 @@ public class Arbol {
     private String descripcion;
 
     @OneToMany(mappedBy = "arbol", cascade = { CascadeType.PERSIST, CascadeType.REMOVE,
-            CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH }, fetch = FetchType.LAZY, orphanRemoval = true)
+            CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH }, fetch = FetchType.EAGER, orphanRemoval = true)
             
     private List<Rama> ramas = new ArrayList<>();
 

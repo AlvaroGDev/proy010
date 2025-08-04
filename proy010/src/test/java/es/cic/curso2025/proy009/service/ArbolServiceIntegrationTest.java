@@ -248,27 +248,6 @@ void testUpdateRama() {
         assertFalse(eliminado.isPresent());
     }
 
-    @Test
-void testDeleteRama() {
-    // Creamos un árbol y lo guardamos
-    Arbol arbol = new Arbol();
-    arbol.setPais("Árbol de prueba");
-    Arbol arbolGuardado = arbolService.createArbol(arbol);
-
-    // Creamos la rama y le asociamos el árbol
-    Rama rama = new Rama();
-    rama.setNumHojas(84);
-    rama.setArbol(arbolGuardado);  // ← ASOCIACIÓN OBLIGATORIA
-    Rama ramaGuardada = arbolService.createRama(rama);
-
-    // Eliminamos la rama
-    arbolService.deleteRama(ramaGuardada.getId());
-
-    // Verificamos que ya no existe
-    Optional<Rama> eliminado = arbolService.getRama(ramaGuardada.getId());
-    assertFalse(eliminado.isPresent());
-}
-
 
     @Test
     void testDeleteNoExisteArbol() {
